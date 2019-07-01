@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block body %}
+<style>
+    body{align-items: start}
+</style>
+<h1 class="m-3 w-100 text-center">Resultado da pesquisa :</h1>
+<div class="row w-100">
+    {% for restaurant in restaurants %}
+        {% if restaurant['items']|length > 0 %}
+        <div class="col-6 col-sm-4 p-2">
+            <div class="card shadow-sm w-100 h-100">
+                <div class="card-body" style="flex-grow : 0 !important">
+                    <h5 class="card-title">{{restaurant.name}}</h1>
+                    <h6 class="card-subtitle text-muted">Pedido mínimo : R${{restaurant.minimunOrder}}</h6>
+                    <h6 class="card-subtitle text-muted">Items : {{restaurant['items']|length}}</h6>
+                </div>
+                <div class="card-body">
+                    <a class="btn btn-primary btn-block" data-toggle="collapse" href="#menu-{{ loop.index }}" role="button" aria-expanded="false">
+                        Menu
+                    </a>
+                    <div class="collapse mt-2" id="menu-{{ loop.index }}">
+                        <div class="row">
+                            {% for item in restaurant['items'] %}
+                                <div class="col-12 col-sm-6 mb-2 d-flex flex-column">
+                                    <p class="m-0">{{item.name}}</p>
+                                    <small class="text-muted">R${{item.price}}</small>
+                                </div> 
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>        
+            </div>
+        </div>
+        {% endif %}
+    {% endfor %}
+</div>
+{% endblock %}
