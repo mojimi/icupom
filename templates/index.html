@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block body %}
+<style>
+    #main-form{
+        max-width: 100vw;
+        width: 500px;
+    }
+</style>
+<form id="main-form" action="{{url_for('query')}}" method="POST">
+    <h2 class="text-center">Crawler</h2>
+    <div class="form-group">
+        <label for="longitude">Longitude</label>
+        <input class="form-control" type="text" id="longitude" name="longitude">
+    </div>
+    <div class="form-group">
+        <label for="latitude">Latidude</label>
+        <input class="form-control" type="text" id="latitude" name="latitude">
+    </div>
+    <div class="form-group">
+        <label for="zip_code">Zip Code</label>
+        <input class="form-control" type="text" id="zip_code" name="zip_code">
+    </div>
+    <div class="form-group">
+        <label for="delivery_fee_max">Max Delivery Fee</label>
+        <input class="form-control" type="number" min="0" max="20" value="0" id="delivery_fee_max" name="delivery_fee_max">
+    </div>
+    <div class="form-group">
+        <label for="min_price">Min item price</label>
+        <input class="form-control" type="number" min="0" value="0" id="min_price" name="min_price">
+    </div>
+    <div class="form-group">
+        <label for="max_price">Max item price</label>
+        <input class="form-control" type="number" min="0" value="20" id="max_price" name="max_price">
+    </div>
+    <button type="submit" class="btn btn-primary">Search</button>
+</form>
+{% endblock %}
