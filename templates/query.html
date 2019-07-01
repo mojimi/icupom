@@ -3,8 +3,8 @@
 <style>
     body{align-items: start}
 </style>
-<h1 class="m-3 w-100 text-center">Resultado da pesquisa :</h1>
 <div class="row w-100">
+    <h1 class="m-3 w-100 text-center col-12">Resultado da pesquisa :</h1>
     {% for restaurant in restaurants %}
         {% if restaurant['items']|length > 0 %}
         <div class="col-6 col-sm-4 p-2">
