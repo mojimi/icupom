@@ -8,7 +8,9 @@ class IfoodCrawler:
             'Connection':   'keep-alive',
             'TE':   'Trailers',
             'Upgrade-Insecure-Requests':    '1',
-            'User-Agent':   'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:67.0) Gecko/20100101 Firefox/67.0'
+            'User-Agent':   'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:67.0) Gecko/20100101 Firefox/67.0',
+            'secret_key' : '9ef4fb4f-7a1d-4e0d-a9b1-9b82873297d8',
+            'access_key' : '69f181d5-0046-4221-b7b2-deef62bd60d5'
         }
 
         self.host_marketplace = 'marketplace.ifood.com.br'
@@ -16,22 +18,23 @@ class IfoodCrawler:
 
     def get_json(self, url, hdr):
         req = urllib.request.Request(url, headers=hdr)
-        response = urllib.request.urlopen(req)
-        return json.loads(response.read().decode('utf-8'))
+        response = urllib.request.urlopen(req).read()
+        json_resp = json.loads(response.decode('utf-8'))
+        return json_resp
 
     def get_merchants(self, latitude, longitude, zip_code, delivery_fee_max):
         url = f'https://marketplace.ifood.com.br/v1/merchants?latitude={latitude}&longitude={longitude}&zip_code={zip_code}&page=0&channel=IFOOD&size=50&delivery_fee_from=0&delivery_fee_to={delivery_fee_max}'
-        self.base_headers['host'] = self.host_marketplace
+        self.base_headers['host'] = 'marketplace.ifood.com.br'
         return self.get_json(url,self.base_headers)['merchants']
     
     def get_restaurant_info(self, uuid):
-        url = f'https://www.ifood.com.br/api/restaurant/{uuid}'
-        self.base_headers['host'] = self.host_api
+        url = f'https://wsloja.ifood.com.br/ifood-ws-v3/restaurants/{uuid}'
+        self.base_headers['host'] = 'wsloja.ifood.com.br'
         return self.get_json(url, self.base_headers)['data']['restaurant']
     
     def get_restaurant_menu(self, uuid):
-        url = f'https://www.ifood.com.br/api/restaurants/{uuid}/menu'
-        self.base_headers['host'] = self.host_api
+        url = f'https://wsloja.ifood.com.br/ifood-ws-v3/restaurants/{uuid}/menu'
+        self.base_headers['host'] = 'wsloja.ifood.com.br'
         return self.get_json(url, self.base_headers)['data']['menu']
     
     def get_restaurant_flat_items(self, uuid, min_price, max_price):
