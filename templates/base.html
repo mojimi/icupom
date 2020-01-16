@@ -9,15 +9,20 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js" integrity="sha384-xrRywqdh3PHs8keKZN+8zzc5TX0GRTLCcmivcbNJWm2rs5C8PRhcEn3czEjhAO9o" crossorigin="anonymous"></script>
   </head>
   <style>
-    body{
+    #main-content{
       display: flex;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
-      min-height: 100vh;
     }
   </style>
-  <body class="p-4">
-    {% block body %}
+  <body>
+    <div id="main-content" class="p-5">
+      {% block body %}
+      {% endblock %}
+    </div>
+    {% block modals %}
     {% endblock %}
   </body>
+  {% block scripts %}
+  {% endblock %}
 </html>

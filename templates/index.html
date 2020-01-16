@@ -1,37 +1,153 @@
 {% extends 'base.html' %}
 {% block body %}
 <style>
-    #main-form{
-        max-width: 100vw;
+    #query-form{
         width: 500px;
+        max-width: 100vw;
     }
 </style>
-<form id="main-form" action="{{url_for('query')}}" method="POST">
-    <h2 class="text-center">Crawler</h2>
-    <div class="form-group">
-        <label for="longitude">Longitude</label>
-        <input class="form-control" type="text" id="longitude" value="{{session.longitude or ''}}" name="longitude">
+<div id="query-form">
+    <h1 class="text-center mb-5">iCUPOM</h1>
+    <div id="has-address" hidden>
+        <h4>Entregar em</h4>
+        <div class="btn-group">
+            <button type="button" id="address-display" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
+            <div id="address-list" class="dropdown-menu"></div>
+        </div>
+        <form action='/query' method='POST'>
+            <div class="form-group">
+                <label for="min_order">Pedido Mínimo</label>
+                <input class="form-control" type="number" min="0" value="0" id="min_order" name="min_order">
+            </div>
+            <div class="form-group">
+                <label for="max_pay">Valor máximo</label>
+                <input class="form-control" type="number" min="0" value="0" id="max_pay" name="max_pay">
+            </div>
+            <button type="submit" class="btn btn-primary">Pesquisar</button>
+        </form>
     </div>
-    <div class="form-group">
-        <label for="latitude">Latidude</label>
-        <input class="form-control" type="text" id="latitude" value="{{session.latitude or ''}}" name="latitude">
+    <div id="no-address" hidden>
+        <button class="btn btn-primary btn-lg btn-block" data-toggle="modal" data-target="#myModal">Novo endereço</button>
     </div>
-    <div class="form-group">
-        <label for="zip_code">Zip Code</label>
-        <input class="form-control" type="text" id="zip_code" value="{{session.zip_code or ''}}" name="zip_code">
+</div>
+{% endblock %}
+{% block modals %}
+<div class="modal" tabindex="-1" role="dialog" id="myModal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form action='/' id="new_address_form">
+                <div class="modal-header">
+                    <h5 class="modal-title">Novo endereço</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="name">Identificação</label>
+                        <input class="form-control" type="text" id="name" name="name">
+                    </div>
+                    <div class="form-group">
+                        <label for="longitude">Longitude</label>
+                        <input class="form-control" type="text" id="longitude" name="longitude">
+                    </div>
+                    <div class="form-group">
+                        <label for="latitude">Latitude</label>
+                        <input class="form-control" type="text" id="latitude" name="latitude">
+                    </div>
+                    <div class="form-group">
+                        <label for="zip_code">CEP</label>
+                        <input class="form-control" type="text" id="zip_code" name="zip_code">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Salvar endereço</button>
+                </div>
+            </form>
+        </div>
     </div>
-    <div class="form-group">
-        <label for="delivery_fee_max">Max Delivery Fee</label>
-        <input class="form-control" type="number" min="0" max="20" value="0" id="delivery_fee_max" name="delivery_fee_max">
-    </div>
-    <div class="form-group">
-        <label for="min_price">Min item price</label>
-        <input class="form-control" type="number" min="0" value="0" id="min_price" name="min_price">
-    </div>
-    <div class="form-group">
-        <label for="max_price">Max item price</label>
-        <input class="form-control" type="number" min="0" value="20" id="max_price" name="max_price">
-    </div>
-    <button type="submit" class="btn btn-primary">Search</button>
-</form>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    const storage = window.localStorage;
+    const data = JSON.parse(storage.getItem('data')) || {addresses : []};
+    if(data.addresses.length > 0){
+        const addressDisplay = document.getElementById('address-display')
+        const addressList = document.getElementById('address-list')
+        addressDisplay.textContent = data.addresses[data.last_used_address].name;
+        addressList.innerHTML = data.addresses.map( (addr,i) => `<a class="dropdown-item${i==data.last_used_address?' active':''}" data-address-id="${i}" href="#">${addr.name}</a>`);
+        document.getElementById('has-address').hidden = false;
+    }else{
+        document.getElementById('no-address').hidden = false;
+    }
+    const new_address_form = document.getElementById('new_address_form')
+    new_address_form.onsubmit = evt => {
+        const values = new_address_form.elements
+        data.addresses.push({
+            name : values.name.value,
+            longitude : values.longitude.value,
+            latitude : values.latitude.value,
+            zip_code : values.zip_code.value
+        })
+        data.last_used_address = data.addresses.length-1
+        storage.setItem('data', JSON.stringify(data))
+    }
+</script>
+<script>
+    class IfoodAPI {
+        constructor (secret_key, access_key) {
+            this.secret_key = secret_key;
+            this.access_key = access_key;
+            this.userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:67.0) Gecko/20100101 Firefox/67.0'
+        }
+
+        get base_headers() {
+            return {
+                secret_key : this.secret_key,
+                access_key : this.access_key,
+                'User-Agent' : this.userAgent
+            }
+        }
+
+        _query(url, parameters, headers={}, method='GET') {
+            const final_url = url + '?' + Object.entries(parameters).map(parameter => `${parameter[0]}=${parameter[1]}`);
+            return fetch(final_url, {
+                method : method,
+                mode : 'no-cors',
+                headers : this.base_headers.extend(headers)
+            })
+        }
+
+        query(url, parameters, headers={}, method='GET', tries=3) {
+            this._query(url, parameters, headers={}, method='GET')
+            .then(response => {
+                if(response.ok){
+                    return response;
+                }else{
+                    tries = tries-1
+                    //#TODO: Wait/Timeout
+                    if(tries == 0){
+                        return Promise.reject('Erro de rede')
+                    }else{
+                        return this.query(url, parameters, headers={}, method='GET', tries=3)
+                    }
+                }
+            })
+        }
+        queryRestaurants(latitude, longitude, size, page) {
+
+        }
+    }
+    fetch('https://marketplace.ifood.com.br/v1/merchants?latitude=-27.5927414&longitude=-48.5515742&channel=IFOOD&available=true&open=true&size=20&page=0', {
+        method: 'GET',
+        mode : 'no-cors',
+        headers : {
+            secret_key : '9ef4fb4f-7a1d-4e0d-a9b1-9b82873297d8',
+            access_key : '69f181d5-0046-4221-b7b2-deef62bd60d5',
+            host : 'marketplace.ifood.com.br',
+            'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:67.0) Gecko/20100101 Firefox/67.0'
+        }
+    }).then(response => print(response))
+</script>
 {% endblock %}
